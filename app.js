@@ -1,127 +1,118 @@
-// --- ESTADO Y PERSISTENCIA ---
-let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 let currentFilter = 'all';
 let searchQuery = '';
 
-// --- SELECTORES ---
-const taskList = document.getElementById('task-list');
-const statsPanel = document.getElementById('stats-panel');
-const themeToggle = document.getElementById('theme-toggle');
+const dom = {
+    list: document.getElementById('tasks'),
+    stats: document.getElementById('stats'),
+    form: document.getElementById('add-form'),
+    input: document.getElementById('new-task'),
+    search: document.getElementById('search'),
+    filters: document.querySelectorAll('.filter'),
+    themeBtn: document.getElementById('theme-btn')
+};
 
-// --- FUNCIONES CORE ---
-
-const save = () => {
-    localStorage.setItem('myTasks', JSON.stringify(tasks));
+function save() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
     render();
-};
+}
 
-const addTask = (title) => {
-    tasks.push({ id: crypto.randomUUID(), title, completed: false, createdAt: Date.now() });
-    save();
-};
-
-const editTask = (id) => {
-    const task = tasks.find(t => t.id === id);
-    const newTitle = prompt("Editar tarea:", task.title);
-    if (newTitle && newTitle.trim()) {
-        task.title = newTitle.trim();
-        save();
-    }
-};
-
-// --- RENDERIZADO CON FILTROS ---
-
-const render = () => {
-    // Filtrar tareas
-    let filteredTasks = tasks.filter(t => {
-        const matchesFilter = currentFilter === 'all' || 
-                             (currentFilter === 'completed' ? t.completed : !t.completed);
-        const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesFilter && matchesSearch;
-    });
-
-    taskList.innerHTML = '';
-    
-    filteredTasks.forEach(task => {
-        const clone = document.getElementById('task-template').content.cloneNode(true);
-        const li = clone.querySelector('li');
-        const span = clone.querySelector('.task-text');
-        const check = clone.querySelector('.task-checkbox');
-
-        span.textContent = task.title;
-        check.checked = task.completed;
-        if(task.completed) span.classList.add('line-through', 'text-slate-400');
-
-        // Eventos
-        check.onchange = () => { task.completed = check.checked; save(); };
-        clone.querySelector('.delete-btn').onclick = () => { tasks = tasks.filter(t => t.id !== task.id); save(); };
-        clone.querySelector('.edit-btn').onclick = () => editTask(task.id);
-        span.onclick = () => editTask(task.id);
-
-        taskList.appendChild(clone);
-    });
-
-    renderStats();
-};
-
-const renderStats = () => {
+function renderStats() {
     const total = tasks.length;
     const done = tasks.filter(t => t.completed).length;
     const progress = total ? Math.round((done / total) * 100) : 0;
 
-    statsPanel.innerHTML = `
-        <div class="grid grid-cols-2 md:grid-cols-1 gap-3">
-            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                <p class="text-xs uppercase font-bold text-blue-600">Total</p>
-                <p class="text-2xl font-bold">${total}</p>
-            </div>
-            <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                <p class="text-xs uppercase font-bold text-green-600">Listas</p>
-                <p class="text-2xl font-bold">${done}</p>
-            </div>
-            <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl col-span-2 md:col-span-1">
-                <p class="text-xs uppercase font-bold text-purple-600">Progreso</p>
-                <p class="text-2xl font-bold">${progress}%</p>
-            </div>
-        </div>
+    dom.stats.innerHTML = `
+        <div class="stat"><span>Total</span><strong>${total}</strong></div>
+        <div class="stat"><span>Listas</span><strong>${done}</strong></div>
+        <div class="stat"><span>Progreso</span><strong>${progress}%</strong></div>
     `;
-};
+}
 
-// --- EVENTOS ---
+function render() {
+    const filtered = tasks.filter(t => {
+        const matchesFilter = currentFilter === 'all' ? true :
+                              currentFilter === 'completed' ? t.completed : 
+                              !t.completed;
+        const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
+    });
 
-document.getElementById('todo-form').onsubmit = (e) => {
+    dom.list.innerHTML = '';
+    
+    filtered.forEach(task => {
+        const tpl = document.getElementById('task-tpl').content.cloneNode(true);
+        const li = tpl.querySelector('.task');
+        const text = tpl.querySelector('.text');
+        const check = tpl.querySelector('.check');
+
+        text.textContent = task.title;
+        check.checked = task.completed;
+        
+        if (task.completed) li.classList.add('done');
+
+        check.addEventListener('change', () => {
+            task.completed = check.checked;
+            save();
+        });
+
+        tpl.querySelector('.delete').addEventListener('click', () => {
+            tasks = tasks.filter(t => t.id !== task.id);
+            save();
+        });
+
+        const editTask = () => {
+            const newTitle = prompt("Editar tarea:", task.title);
+            if (newTitle?.trim()) {
+                task.title = newTitle.trim();
+                save();
+            }
+        };
+
+        tpl.querySelector('.edit').addEventListener('click', editTask);
+        text.addEventListener('click', editTask);
+
+        dom.list.appendChild(tpl);
+    });
+
+    renderStats();
+}
+
+// Events
+dom.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const input = document.getElementById('task-input');
-    if(input.value.trim()) { addTask(input.value.trim()); input.value = ''; }
-};
-
-document.getElementById('search-input').oninput = (e) => {
-    searchQuery = e.target.value;
-    render();
-};
-
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm'));
-        btn.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm');
-        currentFilter = btn.dataset.filter;
-        render();
-    };
+    if (dom.input.value.trim()) {
+        tasks.push({ id: crypto.randomUUID(), title: dom.input.value.trim(), completed: false });
+        dom.input.value = '';
+        save();
+    }
 });
 
-// Acciones masivas
-document.getElementById('mark-all').onclick = () => { tasks.forEach(t => t.completed = true); save(); };
-document.getElementById('clear-completed').onclick = () => { tasks = tasks.filter(t => !t.completed); save(); };
+dom.search.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    render();
+});
 
-// Modo Oscuro
-themeToggle.onclick = () => {
-    document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-};
+dom.filters.forEach(btn => {
+    btn.addEventListener('click', () => {
+        dom.filters.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        render();
+    });
+});
 
-// Inicializar tema
-if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-}
+document.getElementById('mark-all').addEventListener('click', () => {
+    tasks.forEach(t => t.completed = true); save();
+});
+
+document.getElementById('clear-done').addEventListener('click', () => {
+    tasks = tasks.filter(t => !t.completed); save();
+});
+
+dom.themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    dom.themeBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+});
 
 render();
