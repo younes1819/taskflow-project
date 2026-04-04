@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taskflow</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app">
+        <header class="top-bar">
+            <div>
+                <h1>Task Manager</h1>
+                <p>Gestiona tus proyectos con eficiencia</p>
+            </div>
+            <button type="button" id="theme-btn" class="icon-btn" title="Cambiar tema" aria-label="Cambiar a tema oscuro">🌙</button>
+        </header>
+
+        <main class="layout">
+            <div class="content">
+                <div class="card controls">
+                    <form id="add-form" class="add-bar" novalidate>
+                        <div class="add-field">
+                            <input type="text" id="new-task" class="input" placeholder="Nueva tarea..." required maxlength="200" minlength="1" autocomplete="off" aria-label="Título de la nueva tarea" aria-describedby="new-task-error">
+                            <p id="new-task-error" class="field-error" role="alert" hidden></p>
+                        </div>
+                        <button type="submit" class="btn btn-primary">+ Añadir</button>
+                    </form>
+                    
+                    <div class="filters-bar">
+                        <div class="search-wrap">
+                            <input type="text" id="search" class="input search" placeholder="Buscar..." aria-label="Buscar tareas" title="Atajo de teclado: Ctrl+/ o Cmd+/">
+                            <button type="button" id="clear-search" class="icon-btn clear-search-btn" hidden aria-label="Limpiar búsqueda">✕</button>
+                        </div>
+                        
+                        <div class="filter-group" id="filters" role="group" aria-label="Filtrar tareas">
+                            <button type="button" data-filter="all" class="filter active" aria-pressed="true">Todas</button>
+                            <button type="button" data-filter="pending" class="filter" aria-pressed="false">Pendientes</button>
+                            <button type="button" data-filter="completed" class="filter" aria-pressed="false">Completadas</button>
+                        </div>
+                    </div>
+                    <div class="sort-row">
+                        <label for="sort-order" class="sort-label">Ordenar por</label>
+                        <select id="sort-order" class="input sort-select" aria-label="Ordenar lista de tareas">
+                            <option value="newest">Más recientes primero</option>
+                            <option value="oldest">Más antiguas primero</option>
+                            <option value="alpha-asc">Título A → Z</option>
+                            <option value="alpha-desc">Título Z → A</option>
+                            <option value="pending-first">Pendientes primero</option>
+                        </select>
+                    </div>
+                </div>
+
+                <ul id="tasks" class="task-list"></ul>
+
+                <div class="actions">
+                    <button type="button" id="mark-all" class="link-btn" aria-label="Marcar todas las tareas como completadas">Marcar todas</button>
+                    <button type="button" id="clear-done" class="link-btn text-danger" aria-label="Eliminar todas las tareas completadas">Borrar completadas</button>
+                </div>
+            </div>
+
+            <aside id="stats" class="stats-panel" aria-label="Resumen de tareas"></aside>
+        </main>
+    </div>
+
+    <template id="task-tpl">
+        <li class="task">
+            <label class="task-label">
+                <input type="checkbox" class="check">
+                <span class="text"></span>
+            </label>
+            <div class="task-actions">
+                <button type="button" class="icon-btn edit" aria-label="Editar tarea">✏️</button>
+                <button type="button" class="icon-btn delete" aria-label="Eliminar tarea">🗑️</button>
+            </div>
+        </li>
+    </template>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
