@@ -33,6 +33,7 @@ const elements = {
     themeToggle: document.getElementById('theme-btn'),
     markAllButton: document.getElementById('mark-all'),
     clearCompletedButton: document.getElementById('clear-done'),
+    exportTasksButton: document.getElementById('export-tasks'),
     taskTemplate: document.getElementById('task-tpl'),
     sortSelect: document.getElementById('sort-order')
 };
@@ -213,6 +214,21 @@ elements.markAllButton.addEventListener('click', () => {
 elements.clearCompletedButton.addEventListener('click', () => {
     tasks = withoutCompletedTasks(tasks);
     saveAndRefreshView();
+});
+
+elements.exportTasksButton?.addEventListener('click', () => {
+    const json = JSON.stringify(tasks, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `taskflow-tareas-${date}.json`;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
 });
 
 elements.themeToggle.addEventListener('click', () => {
