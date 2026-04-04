@@ -99,6 +99,13 @@ function refreshTaskView() {
             }
             task.title = normalized;
             saveAndRefreshView();
+        },
+        onDuplicateTask: (task) => {
+            const idx = tasks.findIndex((t) => t.id === task.id);
+            const copy = createTaskRecord(task.title);
+            if (idx >= 0) tasks.splice(idx + 1, 0, copy);
+            else tasks.push(copy);
+            saveAndRefreshView();
         }
     });
 }
