@@ -1,6 +1,7 @@
 import { SORT_MODE_KEY } from './constants.js';
 import { loadPersistedTasks, persistTasks } from './storage.js';
 import {
+    coalesceValidTasks,
     createTaskRecord,
     filterTasksForView,
     isSortMode,
@@ -34,6 +35,8 @@ const elements = {
     markAllButton: document.getElementById('mark-all'),
     clearCompletedButton: document.getElementById('clear-done'),
     exportTasksButton: document.getElementById('export-tasks'),
+    importTasksButton: document.getElementById('import-tasks'),
+    importFileInput: document.getElementById('import-file'),
     taskTemplate: document.getElementById('task-tpl'),
     sortSelect: document.getElementById('sort-order')
 };
@@ -229,6 +232,49 @@ elements.exportTasksButton?.addEventListener('click', () => {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+});
+
+elements.importTasksButton?.addEventListener('click', () => {
+    elements.importFileInput?.click();
+});
+
+elements.importFileInput?.addEventListener('change', async (event) => {
+    const input = /** @type {HTMLInputElement} */ (event.target);
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    let text;
+    try {
+        text = await file.text();
+    } catch {
+        alert('No se pudo leer el archivo.');
+        return;
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(text);
+    } catch {
+        alert('El archivo no es JSON válido.');
+        return;
+    }
+
+    if (!Array.isArray(parsed)) {
+        alert('El JSON debe ser un array de tareas.');
+        return;
+    }
+
+    if (!confirm('¿Sustituir todas las tareas actuales por el contenido del archivo?')) return;
+
+    const next = coalesceValidTasks(parsed);
+    if (next.length === 0 && parsed.length > 0) {
+        alert('No hay ninguna tarea válida en el archivo.');
+        return;
+    }
+
+    tasks = next;
+    saveAndRefreshView();
 });
 
 elements.themeToggle.addEventListener('click', () => {
