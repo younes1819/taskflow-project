@@ -10,7 +10,7 @@ import {
     validateTaskTitle,
     withoutCompletedTasks
 } from './tasks.js';
-import { renderTaskListView, syncFilterButtonsAria } from './render.js';
+import { renderTaskListView, startInlineTitleEdit, syncFilterButtonsAria } from './render.js';
 import { applyStoredTheme, toggleAndPersistTheme } from './theme.js';
 
 /** @type {import('./tasks.js').Task[]} */
@@ -92,17 +92,15 @@ function refreshTaskView() {
             tasks = tasks.filter((t) => t.id !== taskId);
             saveAndRefreshView();
         },
-        onEditRequested: (task) => {
-            const nextTitle = prompt('Editar tarea:', task.title);
-            if (nextTitle == null) return;
-            const normalized = normalizeTaskTitle(nextTitle);
-            const err = validateTaskTitle(normalized);
-            if (err) {
-                alert(err);
-                return;
-            }
-            task.title = normalized;
-            saveAndRefreshView();
+        onEditRequested: (task, listItem) => {
+            startInlineTitleEdit(listItem, task, {
+                normalizeTaskTitle,
+                validateTaskTitle,
+                onSaved: (normalized) => {
+                    task.title = normalized;
+                    saveAndRefreshView();
+                }
+            });
         },
         onDuplicateTask: (task) => {
             const idx = tasks.findIndex((t) => t.id === task.id);

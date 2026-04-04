@@ -230,6 +230,14 @@ body {
     gap: 1rem;
     cursor: pointer;
     flex: 1;
+    min-width: 0;
+}
+
+.task-inline-title {
+    flex: 1;
+    min-width: 0;
+    padding: 0.35rem 0.5rem;
+    font: inherit;
 }
 
 .task.done .text {

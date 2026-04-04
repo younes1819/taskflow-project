@@ -76,6 +76,7 @@ export function cloneTaskRowFragment(taskTemplate, task) {
 /**
  * @callback TaskEditHandler
  * @param {Task} task
+ * @param {HTMLElement} listItem Elemento `<li class="task">` de la fila.
  */
 
 /**
@@ -96,11 +97,14 @@ export function cloneTaskRowFragment(taskTemplate, task) {
  */
 export function bindTaskRowHandlers(rowFragment, task, handlers) {
     const { onCompletionChange, onDeleteById, onEditRequested, onDuplicateTask } = handlers;
+    const listItem = rowFragment.querySelector('.task');
     const checkbox = rowFragment.querySelector('.check');
     const duplicateBtn = rowFragment.querySelector('.duplicate');
     const deleteBtn = rowFragment.querySelector('.delete');
     const editBtn = rowFragment.querySelector('.edit');
     const titleEl = rowFragment.querySelector('.text');
+
+    if (!listItem || !checkbox || !duplicateBtn || !deleteBtn || !editBtn || !titleEl) return;
 
     checkbox.addEventListener('change', () => {
         onCompletionChange(task, checkbox.checked);
@@ -114,9 +118,91 @@ export function bindTaskRowHandlers(rowFragment, task, handlers) {
         onDeleteById(task.id);
     });
 
-    const openEditor = () => onEditRequested(task);
+    const openEditor = () => onEditRequested(task, listItem);
     editBtn.addEventListener('click', openEditor);
-    titleEl.addEventListener('click', openEditor);
+    titleEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openEditor();
+    });
+}
+
+/**
+ * Sustituye el título por un `<input>` hasta guardar (Enter o blur) o cancelar (Escape).
+ *
+ * @param {HTMLElement} listItem `<li class="task">`
+ * @param {Task} task
+ * @param {object} opts
+ * @param {(raw: string) => string} opts.normalizeTaskTitle
+ * @param {(normalized: string) => string | null} opts.validateTaskTitle
+ * @param {(normalized: string) => void} opts.onSaved
+ */
+export function startInlineTitleEdit(listItem, task, opts) {
+    const { normalizeTaskTitle, validateTaskTitle, onSaved } = opts;
+    const titleEl = listItem.querySelector('.text');
+    if (!titleEl || listItem.querySelector('.task-inline-title')) return;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'input task-inline-title';
+    input.value = task.title;
+    input.maxLength = 200;
+    input.setAttribute('aria-label', 'Editar título de la tarea');
+
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    const restoreTitleSpan = () => {
+        const inp = listItem.querySelector('.task-inline-title');
+        if (!inp) return;
+        const span = document.createElement('span');
+        span.className = 'text';
+        span.textContent = task.title;
+        inp.replaceWith(span);
+    };
+
+    const save = () => {
+        const normalized = normalizeTaskTitle(input.value);
+        const err = validateTaskTitle(normalized);
+        if (err) {
+            alert(err);
+            input.focus();
+            return;
+        }
+        if (normalized === task.title) {
+            restoreTitleSpan();
+            return;
+        }
+        onSaved(normalized);
+    };
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            save();
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            restoreTitleSpan();
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        if (!listItem.querySelector('.task-inline-title')) return;
+        const normalized = normalizeTaskTitle(input.value);
+        if (normalized === task.title) {
+            restoreTitleSpan();
+            return;
+        }
+        const err = validateTaskTitle(normalized);
+        if (err) {
+            alert(err);
+            queueMicrotask(() => input.focus());
+            return;
+        }
+        onSaved(normalized);
+    });
 }
 
 /**
