@@ -66,6 +66,12 @@ body {
     padding: 1.5rem;
 }
 
+.network-status {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
 /* Forms & Inputs */
 .add-bar {
     display: flex;
