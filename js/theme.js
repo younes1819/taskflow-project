@@ -1,13 +1,10 @@
-import { THEME_KEY } from './constants.js';
-
 /**
- * Aplica clase `dark` y estado visual del botón según `localStorage`.
+ * Aplica el tema inicial en memoria (claro por defecto).
  *
  * @param {HTMLButtonElement} themeButton
  */
 export function applyStoredTheme(themeButton) {
-    const dark = localStorage.getItem(THEME_KEY) === 'dark';
-    document.body.classList.toggle('dark', dark);
+    const dark = document.body.classList.contains('dark');
     updateThemeToggleUi(themeButton, dark);
 }
 
@@ -24,13 +21,12 @@ export function updateThemeToggleUi(themeButton, isDark) {
 }
 
 /**
- * Alterna tema, persiste y actualiza el botón.
+ * Alterna tema y actualiza el botón.
  *
  * @param {HTMLButtonElement} themeButton
  */
 export function toggleAndPersistTheme(themeButton) {
     document.body.classList.toggle('dark');
     const dark = document.body.classList.contains('dark');
-    localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
     updateThemeToggleUi(themeButton, dark);
 }
