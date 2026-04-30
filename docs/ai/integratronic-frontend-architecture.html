@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IntegraTronic · Arquitectura Front-end</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { font-size: 1.65rem; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+    h2 { font-size: 1.2rem; margin-top: 2rem; color: #1e3a5f; }
+    h3 { font-size: 1.05rem; margin-top: 1.25rem; }
+    p { margin: 0.6rem 0; }
+    ul { margin: 0.4rem 0 0.8rem 1.2rem; }
+    code, pre.ts {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 9.5pt;
+    }
+    pre.ts {
+      background: #f4f6f8;
+      border: 1px solid #dfe3e8;
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .mermaid {
+      margin: 1rem 0;
+      padding: 12px;
+      background: #fafbfd;
+      border: 1px solid #e5e9ef;
+      border-radius: 8px;
+      page-break-inside: avoid;
+    }
+    .muted { color: #5c6470; font-size: 10pt; }
+    @media print {
+      body { padding: 12px; }
+      h2 { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <p class="muted">Documento generado para alinear prototipo Figma · IntegraTronic ERP</p>
+  <h1>Diagrama de clases (componentes y servicios)</h1>
+  <p>En front-end los “bloques” son componentes UI, hooks de estado y servicios que llaman a la API. Atributos ≈ props y estado; métodos ≈ manejadores y llamadas asíncronas.</p>
+
+  <div class="mermaid">
+classDiagram
+direction LR
+
+class AppLayout {
+  +props user
+  +state sidebarOpen theme
+}
+
+class SidebarNav {
+  +props activeRoute onNavigate
+  +methods handleNavigate()
+}
+
+class DashboardPage {
+  +state kpis monthlySales familyDistribution lowStock recentSales
+  +methods loadDashboardData()
+}
+
+class ProductsPage {
+  +state products filters pagination
+  +methods handleSearch() handleCreate() handleEdit() handleDelete()
+}
+
+class POSPage {
+  +state catalog cart totals
+  +methods addToCart() removeFromCart() checkout()
+}
+
+class ClientsPage {
+  +state clients segmentFilter searchTerm
+  +methods handleFilter() openHistory()
+}
+
+class useAuth {
+  +state user token isAuthenticated
+  +methods login() logout() refreshSession()
+}
+
+class useProducts {
+  +state products loading error
+  +methods fetchProducts() createProduct() updateProduct() deleteProduct()
+}
+
+class useSales {
+  +state cart sales loading
+  +methods createSale() getRecentSales()
+}
+
+class DashboardService {
+  +getKpis()
+  +getMonthlySales()
+  +getFamilyDistribution()
+  +getLowStock()
+  +getRecentSales()
+}
+
+class ProductService {
+  +listProducts()
+  +createProduct()
+  +updateProduct()
+  +deleteProduct()
+}
+
+class SalesService {
+  +createSale()
+  +listSales()
+}
+
+class ClientService {
+  +listClients()
+  +getClientHistory()
+}
+
+AppLayout --> SidebarNav
+AppLayout --> DashboardPage
+AppLayout --> ProductsPage
+AppLayout --> POSPage
+AppLayout --> ClientsPage
+
+DashboardPage --> DashboardService
+ProductsPage --> useProducts
+useProducts --> ProductService
+POSPage --> useSales
+useSales --> SalesService
+ClientsPage --> ClientService
+
+AppLayout ..> useAuth
+  </div>
+
+  <h1>Diagrama de secuencia (checkout en Punto de Venta)</h1>
+  <p>Flujo desde el clic del usuario hasta la respuesta de la API y la actualización del estado.</p>
+
+  <div class="mermaid">
+sequenceDiagram
+autonumber
+actor U as Usuario
+participant UI as POSPage_UI
+participant HS as useSales
+participant SS as SalesService
+participant API as API
+participant GS as Estado_Global
+
+U->>UI: Click en Pagar
+UI->>UI: Validar carrito y stock
+alt Datos inválidos
+  UI-->>U: Error de validación
+else Datos válidos
+  UI->>HS: createSale(cart, cliente, pago)
+  HS->>SS: createSale(payload)
+  SS->>API: POST /sales
+  API-->>SS: 201 sale + stock actualizado
+  SS-->>HS: venta creada
+  HS->>GS: actualizar ventas e inventario
+  HS-->>UI: éxito
+  UI-->>U: Ticket y carrito vacío
+end
+  </div>
+
+  <h1>Interfaces TypeScript (modelo de datos front-end)</h1>
+  <p>Relaciones: <strong>Sale</strong> contiene varios <strong>SaleItem</strong>; cada ítem referencia un <strong>Product</strong>.</p>
+
+  <pre class="ts">export interface Product {
+  id: string;
+  sku: string;
+  name: string;
+  family: "CPU" | "GPU" | "RAM" | "Almacenamiento" | "Mouse" | "Teclado" | "Monitor" | "Laptop";
+  price: number;
+  stock: number;
+  minStock: number;
+  status: "Disponible" | "Stock Bajo" | "Sin Stock";
+}
+
+export interface Client {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  segment: "VIP" | "Regular";
+  totalSpent: number;
+  lastPurchaseAt?: string;
+}
+
+export interface SaleItem {
+  productId: string;
+  productName: string;
+  sku: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface Sale {
+  id: string;
+  code: string;
+  clientId?: string;
+  clientName?: string;
+  items: SaleItem[];
+  total: number;
+  status: "Completado" | "Pendiente" | "Cancelado";
+  createdAt: string;
+}
+
+export interface DashboardKpis {
+  monthlySales: number;
+  productsInStock: number;
+  activeClients: number;
+  ordersToday: number;
+}
+
+export interface DashboardData {
+  kpis: DashboardKpis;
+  monthlySalesChart: { month: string; amount: number }[];
+  familyDistribution: { family: string; percentage: number }[];
+  lowStockProducts: Product[];
+  recentSales: Sale[];
+}</pre>
+
+  <h2>Prototipo y componentes</h2>
+  <ul>
+    <li><strong>Dashboard</strong>: KpiCard, SalesBarChart, FamilyPieChart, LowStockTable, RecentSalesTable</li>
+    <li><strong>Productos</strong>: ProductTable, ProductFormModal, StatusBadge, FilterBar</li>
+    <li><strong>Punto de Venta</strong>: ProductGrid, CartPanel, CartItem, CheckoutDialog</li>
+    <li><strong>Clientes</strong>: ClientList, ClientCard, ClientHistoryDrawer, SegmentFilter</li>
+  </ul>
+  <p class="muted">El diseño Figma debe mapear 1:1 con estos nombres de componente para facilitar implementación y revisiones.</p>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "neutral",
+      securityLevel: "loose",
+      flowchart: { useMaxWidth: true }
+    });
+  </script>
+</body>
+</html>
