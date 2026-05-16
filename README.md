@@ -1,89 +1,124 @@
-# TaskFlow
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
 
-TaskFlow ahora usa arquitectura cliente-servidor: frontend en `index.html` + módulos ES y backend REST con Node.js + Express.
+---
 
-## Arquitectura de carpetas
+# 📄 TaskFlow
 
-| Ruta | Responsabilidad |
-|------|------------------|
-| `src/index.js` | Bootstrap del servidor, middlewares globales y manejo de errores |
-| `src/config/env.js` | Carga y validación de variables de entorno (`PORT`) |
-| `src/routes/task.routes.js` | Enrutamiento HTTP de `/api/v1/tasks` |
-| `src/controllers/task.controller.js` | Frontera de red: validación y respuestas HTTP |
-| `src/services/task.service.js` | Lógica de negocio en memoria (sin Express acoplado) |
-| `js/api/client.js` | Cliente HTTP del frontend (`fetch`) |
-| `js/main.js` | Estado UI, eventos y sincronización con la API |
-| `js/render.js` | Render de lista y estadísticas |
-| `js/tasks.js` | Utilidades puras (validación, orden, filtros) |
+---
 
-## Middlewares y pipeline
+**Organiza tus tareas de forma simple y visual.**
 
-- `express.json()` parsea payload JSON y lo inyecta en `req.body`.
-- `cors()` habilita consumo de la API desde el frontend.
-- `loggerAcademico` registra método, URL, estado y duración de cada request.
-- Middleware global de errores mapea `NOT_FOUND` a `404` y errores no controlados a `500`.
+Descripción breve del proyecto: aplicación para gestionar tareas personales o de equipo, con interfaz clara, filtros por estado y despliegue listo para producción.
 
-## Variables de entorno
+| Despliegue | URL |
+|------------|-----|
+| Frontend   | [Vercel](https://tu-app.vercel.app) |
+| Backend    | [Vercel](https://tu-api.vercel.app) |
 
-Archivo `.env`:
+---
 
-```env
-PORT=3000
+## Características
+
+---
+
+1. Crear, editar y eliminar tareas con título, descripción y prioridad.
+2. Filtrar por estado (pendiente, en progreso, completada) y buscar por texto.
+3. Persistencia de datos y despliegue separado de frontend y API.
+
+---
+
+## Tecnologías
+
+---
+
+| Frontend | Uso |
+|----------|-----|
+| React / Next.js | Interfaz y enrutado de la aplicación |
+| TypeScript | Tipado estático y mantenibilidad del código |
+| Tailwind CSS | Estilos y diseño responsive |
+
+| Backend | Uso |
+|---------|-----|
+| Express | API REST para tareas y usuarios |
+| Node.js | Entorno de ejecución del servidor |
+
+| Auxiliares | Uso |
+|------------|-----|
+| Vercel | Despliegue de frontend y backend |
+| Git / GitHub | Control de versiones y colaboración |
+
+---
+
+## Estructura del proyecto
+
+---
+
+```text
+taskflow-project/
+├── index.html              # Estructura HTML semántica (si aplica)
+├── public/                 # Assets estáticos
+├── src/                    # Código fuente del frontend
+│   ├── components/         # Componentes reutilizables
+│   ├── pages/              # Vistas y rutas
+│   └── styles/             # Estilos globales
+├── api/                    # Rutas serverless (Vercel)
+├── server/                 # Servidor Express (backend)
+│   ├── routes/             # Endpoints de la API
+│   └── index.js            # Punto de entrada del servidor
+└── docs/                   # Documentación adicional
 ```
 
-`src/config/env.js` aborta el arranque si falta `PORT`.
+---
 
-## API REST
+## Descargar y ejecutar
 
-Base URL: `http://localhost:3000/api/v1/tasks`
+---
 
-- `GET /` -> lista tareas (`200`)
-- `POST /` -> crea tarea (`201`)
-- `PATCH /:id` -> actualiza parcialmente (`200`)
-- `PUT /` -> reemplaza toda la colección (`200`)
-- `DELETE /:id` -> elimina tarea (`204`)
-
-Ejemplo `POST`:
-
-```json
-{
-  "title": "Preparar demo final",
-  "completed": false
-}
+```bash
+git clone https://github.com/usuario/taskflow-project.git
+cd taskflow-project
 ```
 
-## Estados de red en frontend
+Instalar dependencias y arrancar en local (ajusta según tu stack):
 
-La UI maneja tres estados:
+```bash
+# Frontend
+npm install
+npm run dev
 
-- **Carga:** mensajes como "Cargando tareas..." o "Guardando cambios...".
-- **Exito:** "Sincronizado con el servidor."
-- **Error:** muestra mensaje de backend (`400`, `404`, `500`) en el estado de red.
+# Backend (en otra terminal)
+cd server
+npm install
+npm run dev
+```
 
-## Arranque del proyecto
+---
 
-1. Instalar dependencias:
-   ```bash
-   npm install
-   ```
-2. Levantar backend:
-   ```bash
-   npm run dev
-   ```
-3. Servir frontend en otro terminal:
-   ```bash
-   npx --yes serve .
-   ```
-4. Abrir la URL que te indique `serve`.
+## Desplegar en Vercel
 
-## Pruebas de integración recomendadas (Postman/Thunder Client)
+---
 
-- `POST` sin `title` -> debe responder `400`.
-- `POST` con `title` corto (`"ab"`) -> `400`.
-- `DELETE` con id inexistente -> `404`.
-- `PATCH` con `completed: "si"` -> `400`.
-- Error interno forzado -> `500` con mensaje genérico.
+### Frontend
 
-## Recursos adicionales
+1. Importa el repositorio en [Vercel](https://vercel.com).
+2. Configura el directorio raíz del frontend y las variables de entorno (`NEXT_PUBLIC_API_URL`, etc.).
+3. Despliega; Vercel asignará una URL de producción automáticamente.
 
-- [docs/backend-api.md](docs/backend-api.md)
+### Backend
+
+1. Crea un segundo proyecto en Vercel apuntando a la carpeta `server/` o `api/`.
+2. Define las variables de entorno (base de datos, `JWT_SECRET`, CORS, etc.).
+3. Tras el despliegue, actualiza la URL de la API en el frontend.
+
+---
+
+Desarrollado durante las prácticas en [Comer Estudiar](https://comerestudiar.com) — Tu Nombre — 2026
